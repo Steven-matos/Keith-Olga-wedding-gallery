@@ -16,25 +16,43 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage });
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, path.join(__dirname, "../uploads"));
+    },
+    filename: (req, file, cb) => {
+      cb(null, `${Date.now()}-${file.originalname}`);
+    },
+  }),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // Maximum file size in bytes (10MB)
+    files: 10, // Maximum number of files allowed
+  },
+});
 
 // Route: Upload File
-router.post("/", upload.single("photo"), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).send("No file uploaded.");
+router.post("/", upload.array("images", 10), async (req, res) => {
+  if (!req.files) {
+    return res.status(400).send("No Photos uploaded.");
   }
 
-  const photo = new Photo({
-    uploaderName: req.body.uploaderName,
-    caption: req.body.caption,
-    photoURL: `/uploads/${req.file.filename}`,
-  });
+  const photos = [];
+
+  for (const file of req.files) {
+    const photo = new Photo({
+      uploaderName: req.body.uploaderName,
+      caption: req.body.caption,
+      photoURL: `/uploads/${file.filename}`,
+    });
+    photos.push(photo);
+  }
 
   try {
-    await photo.save();
+    await Photo.insertMany(photos);
     res.status(200).json({
-      message: "File uploaded and metadata saved successfully",
-      photo,
+      message: "Photos uploaded and metadata saved successfully",
+      photos,
     });
   } catch (error) {
     res.status(500).json({ error: "Error saving photo metadata" });

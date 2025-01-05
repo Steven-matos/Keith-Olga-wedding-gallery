@@ -11,6 +11,10 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: "Internal Server Error" });
+});
 
 // MongoDB Connection
 mongoose
@@ -21,8 +25,8 @@ mongoose
 // Routes
 const uploadRoutes = require("./routes/upload");
 const photoRoutes = require("./routes/photo");
-app.use("/upload", uploadRoutes);
-app.use("/photo", photoRoutes);
+app.use("api/upload", uploadRoutes);
+app.use("api/photo", photoRoutes);
 
 // Serve static files for uploaded images
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
