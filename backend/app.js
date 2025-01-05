@@ -25,11 +25,12 @@ mongoose
 // Routes
 const uploadRoutes = require("./routes/upload");
 const photoRoutes = require("./routes/photo");
-app.use("api/upload", uploadRoutes);
-app.use("api/photo", photoRoutes);
+app.use("/api/upload", uploadRoutes);
+app.use("/api/photo", photoRoutes);
 
-// Serve static files for uploaded images
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.get("/", (req, res) => {
+  res.status(200).json({ message: "Connected to the server" });
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

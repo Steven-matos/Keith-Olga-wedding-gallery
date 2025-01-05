@@ -55,7 +55,7 @@ router.post("/", upload.array("images", 10), async (req, res) => {
       photos,
     });
   } catch (error) {
-    res.status(500).json({ error: "Error saving photo metadata" });
+    res.status(500).json({ error: error });
   }
 });
 

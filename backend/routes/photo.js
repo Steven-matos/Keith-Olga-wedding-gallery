@@ -5,7 +5,7 @@ const Photo = require("../models/Photo");
 const router = express.Router();
 
 // Route: Get All Photos
-router.get("/", async (req, res) => {
+router.get("/all-photos", async (req, res) => {
   try {
     const photos = await Photo.find();
     res.status(200).json(photos);
