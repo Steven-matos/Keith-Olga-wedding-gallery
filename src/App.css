@@ -1,38 +1,58 @@
-.App {
-  text-align: center;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.style-script-regular {
+  font-family: "Style Script", serif;
+  font-weight: 400;
+  font-style: normal;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+body {
+  @apply m-0;
+  background-color: rgba(253, 242, 228, 0.288);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
+/* HEADER CSS */
+.header {
+  @apply py-6 flex justify-center;
+}
+
+.title {
+  @apply text-gray-800 text-5xl leading-none;
+}
+
+/* Mobile-specific styles for iPhone 12 */
+@media only screen and (max-width: 768px) {
+  .header {
+    @apply py-6 flex justify-center;
+  }
+
+  .title {
+    @apply text-gray-800 text-5xl leading-none;
   }
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+/* Scaling up for larger screens */
+@media only screen and (min-width: 768px) {
+  .header {
+    @apply py-6 flex justify-center;
   }
-  to {
-    transform: rotate(360deg);
+
+  .title {
+    @apply text-gray-800 text-5xl leading-none;
+  }
+}
+
+@media only screen and (max-width: 768px) {
+  .uploader {
+    @apply mx-11 my-6;
+  }
+}
+
+/* Scaling up for larger screens */
+@media only screen and (min-width: 768px) {
+  .uploader {
+    @apply mx-44 my-11;
   }
 }

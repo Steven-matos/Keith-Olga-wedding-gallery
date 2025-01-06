@@ -27,7 +27,7 @@ const upload = multer({
   }),
   limits: {
     fileSize: 10 * 1024 * 1024, // Maximum file size in bytes (10MB)
-    files: 10, // Maximum number of files allowed
+    files: 10,
   },
 });
 
@@ -43,7 +43,7 @@ router.post("/", upload.array("images", 10), async (req, res) => {
     const photo = new Photo({
       uploaderName: req.body.uploaderName,
       caption: req.body.caption,
-      photoURL: `/uploads/${file.filename}`,
+      photoURL: `../images/${file.filename}`,
     });
     photos.push(photo);
   }
