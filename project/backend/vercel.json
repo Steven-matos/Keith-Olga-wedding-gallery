@@ -1,9 +1,21 @@
 {
-  "version": 2,
   "builds": [
-    { "src": "api/**/*.js", "use": "@vercel/node" }
+    {
+      "src": "/",
+      "use": "@vercel/builder-npm"
+    }
   ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1" }
-  ]
+    {
+      "src": "./backend/api/index.js",
+      "dest": "/"
+    }
+  ],
+  "env": {
+    "MONGODB_URI": "mongodb+srv://tridentinnovationsinvestments:ppso6Bw02iwI6usl@kowedding.9ysrd.mongodb.net/",
+    "AWS_ACCESS_KEY_ID": "AKIA2KT3C7ILFOAWSROL",
+    "AWS_SECRET_ACCESS_KEY": "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",
+    "AWS_REGION": "us-east-1",
+    "AWS_BUCKET_NAME": "keith-olga-wedding-photos"
+  }
 }
