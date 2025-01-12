@@ -1,7 +1,6 @@
 {
   "builds": [
     {
-      "src": "./api",
       "buildCommand": "node index.js"
     }
   ],
