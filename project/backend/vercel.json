@@ -2,8 +2,7 @@
   "builds": [
     {
       "src": "./api",
-      "use": "@vercel/builder-npm",
-      "command": "node index.js"
+      "buildCommand": "node index.js"
     }
   ],
   "routes": [
