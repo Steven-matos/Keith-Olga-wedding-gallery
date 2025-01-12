@@ -25,4 +25,8 @@ const photoRoutes = require("./photo");
 app.use("/api/upload", uploadRoutes);
 app.use("/api/photo", photoRoutes);
 
+app.get("/", (req, res) => {
+  res.status(200).json({ message: "Connected to the server" });
+});
+
 module.exports = app;
