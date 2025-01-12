@@ -1,6 +1,6 @@
 const express = require("express");
 const AWS = require("aws-sdk");
-const Photo = require("../models/Photo");
+const Photo = require("../models/photo.js");
 
 const router = express.Router();
 

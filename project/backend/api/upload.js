@@ -1,7 +1,7 @@
 const express = require("express");
 const multer = require("multer");
 const AWS = require("aws-sdk");
-const Photo = require("../models/Photo");
+const Photo = require("../models/photo.js");
 
 const router = express.Router();
 
