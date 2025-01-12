@@ -36,7 +36,7 @@ body {
 /* Scaling up for larger screens */
 @media only screen and (min-width: 768px) {
   .header {
-    @apply py-6 flex justify-center;
+    @apply py-4 flex justify-center;
   }
 
   .title {
