@@ -1,8 +1,9 @@
 {
   "builds": [
     {
-      "src": "/",
-      "use": "@vercel/builder-npm"
+      "src": "./api",
+      "use": "@vercel/builder-npm",
+      "command": "node index.js"
     }
   ],
   "routes": [
