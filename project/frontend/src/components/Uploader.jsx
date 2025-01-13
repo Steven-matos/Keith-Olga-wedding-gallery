@@ -92,6 +92,7 @@ const PhotoUploader = () => {
                     type="file"
                     multiple
                     onChange={handleFileChange}
+                    className="w-full"
                   />
                 </div>
               </label>
