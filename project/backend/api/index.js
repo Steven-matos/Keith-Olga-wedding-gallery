@@ -7,7 +7,6 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors()); // Use the cors middleware
-
 // Set allowed origins, methods and headers here
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
@@ -18,21 +17,21 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
   next();
 });
-
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => console.log("Connected to MongoDB"))
-  .catch((err) => console.error("MongoDB connection error:", err));
+  .then(() => {
+    console.log("Connected to MongoDB");
+  })
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+  });
 
 app.get("/", (req, res) => {
   res.status(200).send("Connected to Server");
 });
 
 app.get("/test", (req, res) => {
-  mongoose.connect(mongoUri, () => {
-    console.log("Connected to MongoDB!");
-    res.status(200).send("Hello from Vercel!");
-  });
+  res.status(200).send("Hello from Vercel!");
 });
 
 const uploadRoutes = require("./upload");
