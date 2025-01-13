@@ -20,7 +20,7 @@ router.get("/all-photos", async (req, res) => {
     // Generate signed URLs for each photo
     const signedPhotos = photos.map((photo) => {
       const signedUrl = s3.getSignedUrl("getObject", {
-        Bucket: process.env.AWS_BUCKET_NAME,
+        Bucket: process.env.AWS_S3_BUCKET_NAME,
         Key: photo.photoURL,
         Expires: 60 * 60,
       });
