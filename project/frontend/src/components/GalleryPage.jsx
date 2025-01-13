@@ -1,39 +1,45 @@
 import React, { useState, useEffect } from "react";
+import useSWR from "swr";
+
 import axios from "axios";
+import Gallery from "react-image-gallery";
+const ImageGallery = Gallery.default ? Gallery.default : Gallery;
 
 const GalleryPage = () => {
-  const [photos, setPhotos] = useState([]);
-  const [api, setAPI] = useState(process.env.REACT_APP_API);
-  const [modalImage, setModalImage] = useState("");
-  const [error, setError] = useState("");
+  const [photo, setPhotos] = useState([]);
+  const { data, error } = useSWR(
+    `${process.env.REACT_APP_API}/api/photo/all-photos`,
+    (url) =>
+      axios
+        .get(url)
+        .then((response) => response.data)
+        .catch((error) => alert(error))
+  );
 
   useEffect(() => {
-    axios
-      .get(`${api}/api/photo/all-photos`, {
-        withCredentials: true,
-      })
-      .then((response) => {
-        setPhotos(response.data);
-        console.log(response.data);
-      })
-      .catch(() => setError("Failed to load photos"));
-  }, []);
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") {
-        setModalImage("");
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+    if (error) console.error("Failed to load photos");
+    if (data) setPhotos(data);
+  }, [data, error]);
 
   return (
-    <div className="flex justify-center mt-7 mx-11 pt-7 rounded-none border-t-2 border-solid border-slate-500">
-      <div className="text-5xl style-script-regular">Gallery</div>
+    <div className="mt-7 mx-11 pt-7 rounded-none border-t-2 border-solid border-slate-500">
+      <h3 className="text-center text-5xl style-script-regular">Gallery</h3>
+      <section className="mx-auto p-4">
+        <article>
+          <ImageGallery
+            items={photo.map((item) => ({
+              ...item,
+              original: item.photoURL,
+              thumbnail: item.photoURL,
+            }))}
+            showNav={true}
+            showThumbnails={false}
+            showPlayButton={false}
+            slideDuration={1000}
+          />
+        </article>
+      </section>
     </div>
   );
 };
-
 export default GalleryPage;

@@ -1,11 +1,25 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import "~react-image-gallery/styles/css/image-gallery.css";
 
 .style-script-regular {
   font-family: "Style Script", serif;
   font-weight: 400;
   font-style: normal;
+}
+
+.bg-gray-200:hover {
+  background-color: blue;
+}
+
+.pressed {
+  background-color: red;
+}
+
+input[type="file"] {
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 body {
