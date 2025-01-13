@@ -27,6 +27,14 @@ mongoose
 app.get("/", (req, res) => {
   res.status(200).send("Connected to Server");
 });
+
+app.get("/test", (req, res) => {
+  mongoose.connect(mongoUri, () => {
+    console.log("Connected to MongoDB!");
+    res.status(200).send("Hello from Vercel!");
+  });
+});
+
 const uploadRoutes = require("./upload");
 const photoRoutes = require("./photo");
 
