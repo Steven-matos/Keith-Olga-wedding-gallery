@@ -34,12 +34,8 @@ app.get("/", (req, res) => {
   res.status(200).send("Connected to Server");
 });
 
-app.get("/test", (req, res) => {
-  res.status(200).send("Hello from Vercel!");
-});
-
-const uploadRoutes = require("./routes/upload");
-const photoRoutes = require("./routes/photo");
+const uploadRoutes = require("./routes/upload.js");
+const photoRoutes = require("./routes/photo.js");
 
 // Use the routes
 app.use("/api/upload", uploadRoutes);
