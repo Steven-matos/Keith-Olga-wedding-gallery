@@ -3,15 +3,19 @@ import axios from "axios";
 
 const GalleryPage = () => {
   const [photos, setPhotos] = useState([]);
+  const [api, setAPI] = useState(process.env.REACT_APP_API);
   const [modalImage, setModalImage] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
     axios
-      .get(`${process.env.API}/api/photo/all-photos`, {
+      .get(`${api}/api/photo/all-photos`, {
         withCredentials: true,
       })
-      .then((response) => setPhotos(response.data))
+      .then((response) => {
+        setPhotos(response.data);
+        console.log(response.data);
+      })
       .catch(() => setError("Failed to load photos"));
   }, []);
 

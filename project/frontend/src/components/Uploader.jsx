@@ -6,6 +6,7 @@ import { Link, useNavigate } from "react-router";
 const PhotoUploader = () => {
   let navigate = useNavigate();
   const [selectedFiles, setSelectedFiles] = useState([]);
+  const [api, setAPI] = useState(process.env.REACT_APP_API);
 
   const handleFileChange = (event) => {
     setSelectedFiles([...selectedFiles, ...event.target.files]);
@@ -28,7 +29,7 @@ const PhotoUploader = () => {
     formData.append("uploaderName", "generic");
 
     axios
-      .post(`${process.env.API}/api/upload`, formData, {
+      .post(`${api}/api/upload`, formData, {
         withCredentials: true,
       })
       .then((response) => {

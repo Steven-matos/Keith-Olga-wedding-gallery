@@ -1,6 +1,6 @@
 {
-  "name": "wedding-site",
-  "version": "0.1.0",
+  "name": "keith-olga-wedding-site",
+  "version": "0.2.0",
   "private": true,
   "dependencies": {
     "@headlessui/react": "^2.2.0",
@@ -13,7 +13,7 @@
     "react-dropzone": "^14.3.5",
     "react-router": "^7.1.1",
     "react-router-dom": "^7.1.1",
-    "react-scripts": "5.0.1"
+    "react-scripts": "^5.0.1"
   },
   "scripts": {
     "start": "react-scripts start",
