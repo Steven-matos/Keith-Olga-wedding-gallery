@@ -28,7 +28,7 @@ const PhotoUploader = () => {
     formData.append("uploaderName", "generic");
 
     axios
-      .post("http://localhost:3000/api/upload", formData, {
+      .post(`${process.env.API}/api/upload`, formData, {
         withCredentials: true,
       })
       .then((response) => {
@@ -42,7 +42,7 @@ const PhotoUploader = () => {
   return (
     <div>
       <header className="header">
-        <h1 className="title style-script-regular">Keith & Olga 2025</h1>
+        <h1 className="title style-script-regular">Keith & Olga</h1>
       </header>
       <div className="col-span-full">
         <label

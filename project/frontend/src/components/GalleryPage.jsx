@@ -8,7 +8,7 @@ const GalleryPage = () => {
 
   useEffect(() => {
     axios
-      .get("http://localhost:3000/api/photo/all-photos", {
+      .get(`${process.env.API}/api/photo/all-photos`, {
         withCredentials: true,
       })
       .then((response) => setPhotos(response.data))
