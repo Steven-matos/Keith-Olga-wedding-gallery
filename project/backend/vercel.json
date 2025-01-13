@@ -1,8 +1,1 @@
-{
-  "routes": [
-    {
-      "src": "./api/index.js",
-      "dest": "/"
-    }
-  ]
-}
+{ "version": 2, "rewrites": [{ "source": "/(.*)", "destination": "/api" }] }
