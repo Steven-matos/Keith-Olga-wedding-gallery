@@ -42,7 +42,7 @@ const Header = () => {
               rel="noreferrer noopener"
               target="_blank"
             >
-              414 King St, Ovideo, FL 32765
+              414 King St, Oviedo, FL 32765
             </a>
           </address>
           <p>
