@@ -26,7 +26,7 @@ const Header = () => {
             <br />
           </p>
           <p>
-            <b>RSVP by March 25 text or call</b>
+            <b>RSVP by March 25 <br /> text or call</b>
             <br />
             <a className="underline underline-offset-4" href="tel:321-437-8105">
               321-437-8105
