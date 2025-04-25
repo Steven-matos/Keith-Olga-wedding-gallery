@@ -6,6 +6,7 @@ const cors = require("cors");
 dotenv.config();
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -40,5 +41,13 @@ const photoRoutes = require("./routes/photo.js");
 // Use the routes
 app.use("/api/upload", uploadRoutes);
 app.use("/api/photo", photoRoutes);
+
+// Only start the server if this file is run directly
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+    console.log(`API available at http://localhost:${PORT}`);
+  });
+}
 
 module.exports = app;

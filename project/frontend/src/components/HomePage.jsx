@@ -1,6 +1,6 @@
 import React from "react";
 import "../App.css";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import GalleryPage from "./GalleryPage";
 import Header from "./Header";
 

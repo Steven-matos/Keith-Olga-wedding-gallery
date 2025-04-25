@@ -70,3 +70,65 @@ body {
     @apply mx-44 my-11;
   }
 }
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+  .image-gallery {
+    width: 100%;
+  }
+
+  .image-gallery-slide img {
+    max-height: 60vh;
+    object-fit: contain;
+  }
+
+  .image-gallery-bullets {
+    bottom: 10px;
+  }
+
+  .image-gallery-bullets .image-gallery-bullet {
+    width: 8px;
+    height: 8px;
+    margin: 0 4px;
+  }
+
+  .image-gallery-icon {
+    padding: 10px;
+  }
+
+  .image-gallery-fullscreen-button,
+  .image-gallery-play-button {
+    display: none;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) {
+  .image-gallery-icon:hover {
+    color: #337ab7;
+  }
+
+  button {
+    touch-action: manipulation;
+  }
+
+  a {
+    touch-action: manipulation;
+  }
+}
+
+/* Prevent text selection on touch devices */
+@media (hover: none) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  input,
+  textarea {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}
