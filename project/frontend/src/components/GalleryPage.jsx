@@ -4,6 +4,14 @@ import axios from "axios";
 import Gallery from "react-image-gallery";
 const ImageGallery = Gallery.default ? Gallery.default : Gallery;
 
+// Get the correct API URL based on environment
+const getApiUrl = () => {
+  if (process.env.NODE_ENV === "production") {
+    return "https://kow-backend.vercel.app/api";
+  }
+  return process.env.REACT_APP_API || "http://localhost:3001/api";
+};
+
 // SWR fetcher function
 const fetcher = (url) => axios.get(url).then((res) => res.data);
 
@@ -19,7 +27,7 @@ const swrConfig = {
 const GalleryPage = () => {
   const [photo, setPhotos] = useState([]);
   const { data, error } = useSWR(
-    `${process.env.REACT_APP_API}/api/photo/all-photos`,
+    `${getApiUrl()}/photo/all-photos`,
     fetcher,
     swrConfig
   );

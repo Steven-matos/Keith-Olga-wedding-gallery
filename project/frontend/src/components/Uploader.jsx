@@ -3,6 +3,14 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { PhotoIcon } from "@heroicons/react/24/solid";
 
+// Get the correct API URL based on environment
+const getApiUrl = () => {
+  if (process.env.NODE_ENV === "production") {
+    return "https://kow-backend.vercel.app/api";
+  }
+  return process.env.REACT_APP_API || "http://localhost:3001/api";
+};
+
 const PhotoUploader = () => {
   const navigate = useNavigate();
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -15,7 +23,7 @@ const PhotoUploader = () => {
     // Check backend connection
     const checkConnection = async () => {
       try {
-        await axios.get(`${process.env.REACT_APP_API}/api/photo/all-photos`);
+        await axios.get(`${getApiUrl()}/photo/all-photos`);
         setServerStatus("connected");
         console.log("Backend server is running and connected");
       } catch (error) {
@@ -62,9 +70,7 @@ const PhotoUploader = () => {
     setUploadProgress(initialProgress);
 
     // Set up SSE connection for progress updates
-    const source = new EventSource(
-      `${process.env.REACT_APP_API}/api/upload/progress`
-    );
+    const source = new EventSource(`${getApiUrl()}/upload/progress`);
     setEventSource(source);
 
     source.onmessage = (event) => {
@@ -82,7 +88,7 @@ const PhotoUploader = () => {
     formData.append("uploaderName", "generic");
 
     axios
-      .post(`${process.env.REACT_APP_API}/api/upload`, formData, {
+      .post(`${getApiUrl()}/upload`, formData, {
         withCredentials: false,
       })
       .then(() => {
