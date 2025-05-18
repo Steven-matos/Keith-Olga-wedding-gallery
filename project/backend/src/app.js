@@ -15,10 +15,11 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // Configure CORS
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? 'https://kow-gallery.vercel.app' 
+    ? ['https://kow-gallery.vercel.app', 'https://kow-frontend-orpin.vercel.app']
     : 'http://localhost:3000',
-  methods: ['GET', 'POST'],
+  methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type'],
+  credentials: true,
   maxAge: 86400 // 24 hours
 }));
 
@@ -26,16 +27,6 @@ app.use(cors({
 app.use((req, res, next) => {
   req.setTimeout(300000); // 5 minutes
   res.setTimeout(300000); // 5 minutes
-  next();
-});
-
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept"
-  );
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
   next();
 });
 
