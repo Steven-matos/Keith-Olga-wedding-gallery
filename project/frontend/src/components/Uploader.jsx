@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { PhotoIcon } from "@heroicons/react/24/solid";
+import imageCompression from 'browser-image-compression';
 
 // Get the correct API URL based on environment
 const getApiUrl = () => {
@@ -73,8 +74,29 @@ const PhotoUploader = () => {
     }, 3000);
   };
 
+  // Function to compress image
+  const compressImage = async (file) => {
+    const options = {
+      maxSizeMB: 5,
+      maxWidthOrHeight: 1920,
+      useWebWorker: true,
+      initialQuality: 0.8,
+    };
+
+    try {
+      const compressedFile = await imageCompression(file, options);
+      return new File([compressedFile], file.name, {
+        type: file.type,
+        lastModified: file.lastModified,
+      });
+    } catch (error) {
+      console.error('Error compressing image:', error);
+      return file; // Return original file if compression fails
+    }
+  };
+
   // Function to upload files in chunks
-  const uploadFilesInChunks = async (files, chunkSize = 3) => {
+  const uploadFilesInChunks = async (files, chunkSize = 2) => {
     const chunks = [];
     for (let i = 0; i < files.length; i += chunkSize) {
       chunks.push(files.slice(i, i + chunkSize));
@@ -86,7 +108,13 @@ const PhotoUploader = () => {
 
     for (const chunk of chunks) {
       const formData = new FormData();
-      chunk.forEach((file) => {
+      
+      // Compress each file in the chunk
+      const compressedFiles = await Promise.all(
+        chunk.map(file => compressImage(file))
+      );
+
+      compressedFiles.forEach((file) => {
         formData.append("images", file);
       });
       formData.append("uploaderName", "generic");
@@ -108,7 +136,6 @@ const PhotoUploader = () => {
         });
 
         if (response.status === 207) {
-          // Partial success
           successfulUploads += response.data.successful;
           failedUploads += response.data.failed;
           failedFiles.push(...response.data.failedFiles);

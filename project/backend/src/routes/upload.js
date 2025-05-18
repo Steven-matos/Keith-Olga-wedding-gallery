@@ -22,8 +22,8 @@ const s3Client = new S3Client({
 // Image processing configuration
 const MAX_WIDTH = 1920; // Maximum width for resized images
 const MAX_HEIGHT = 1080; // Maximum height for resized images
-const QUALITY = 80; // JPEG quality (0-100)
-const MOBILE_QUALITY = 75; // Slightly lower quality for mobile to reduce data usage
+const QUALITY = 85; // JPEG quality (0-100)
+const MOBILE_QUALITY = 80; // Slightly lower quality for mobile to reduce data usage
 
 // Supported image formats
 const SUPPORTED_FORMATS = [
@@ -113,6 +113,8 @@ async function processImage(buffer, originalMimeType) {
           .webp({
             quality: MOBILE_QUALITY,
             effort: 4,
+            lossless: false,
+            nearLossless: true,
           })
           .toBuffer();
         break;
@@ -122,6 +124,7 @@ async function processImage(buffer, originalMimeType) {
           .png({
             compressionLevel: 6,
             palette: true,
+            quality: MOBILE_QUALITY,
           })
           .toBuffer();
         break;
@@ -133,6 +136,10 @@ async function processImage(buffer, originalMimeType) {
             quality: MOBILE_QUALITY,
             mozjpeg: true,
             chromaSubsampling: "4:2:0",
+            optimizeScans: true,
+            trellisQuantisation: true,
+            overshootDeringing: true,
+            optimizeCoding: true,
           })
           .toBuffer();
     }
@@ -153,7 +160,7 @@ async function processImage(buffer, originalMimeType) {
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10 MB limit
+    fileSize: 20 * 1024 * 1024, // 20 MB limit
     files: 10,
   },
   fileFilter: (req, file, cb) => {
