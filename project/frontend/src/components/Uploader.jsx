@@ -326,7 +326,6 @@ const PhotoUploader = () => {
                     onChange={handleFileChange}
                     className="w-full cursor-pointer"
                     accept="image/*"
-                    capture="environment" // Use camera on mobile
                   />
                 </div>
               </label>
