@@ -73,7 +73,63 @@ const PhotoUploader = () => {
     }, 3000);
   };
 
-  const handleSubmit = (event) => {
+  // Function to upload files in chunks
+  const uploadFilesInChunks = async (files, chunkSize = 3) => {
+    const chunks = [];
+    for (let i = 0; i < files.length; i += chunkSize) {
+      chunks.push(files.slice(i, i + chunkSize));
+    }
+
+    let successfulUploads = 0;
+    let failedUploads = 0;
+    const failedFiles = [];
+
+    for (const chunk of chunks) {
+      const formData = new FormData();
+      chunk.forEach((file) => {
+        formData.append("images", file);
+      });
+      formData.append("uploaderName", "generic");
+
+      try {
+        const response = await axios.post(`${getApiUrl()}/upload`, formData, {
+          withCredentials: false,
+          timeout: 300000, // 5 minute timeout
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress((prev) => ({
+              ...prev,
+              total: percentCompleted,
+            }));
+          },
+        });
+
+        if (response.status === 207) {
+          // Partial success
+          successfulUploads += response.data.successful;
+          failedUploads += response.data.failed;
+          failedFiles.push(...response.data.failedFiles);
+        } else {
+          successfulUploads += chunk.length;
+        }
+      } catch (error) {
+        failedUploads += chunk.length;
+        chunk.forEach(file => {
+          failedFiles.push({
+            filename: file.name,
+            error: error.response?.data?.details || error.message
+          });
+        });
+      }
+    }
+
+    return { successfulUploads, failedUploads, failedFiles };
+  };
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
     if (!selectedFiles.length) {
       alert("Please select at least one photo to upload.");
@@ -101,71 +157,45 @@ const PhotoUploader = () => {
       }));
     };
 
-    const formData = new FormData();
-    selectedFiles.forEach((file) => {
-      formData.append("images", file);
-    });
-    formData.append("uploaderName", "generic");
+    try {
+      const { successfulUploads, failedUploads, failedFiles } = await uploadFilesInChunks(selectedFiles);
 
-    axios
-      .post(`${getApiUrl()}/upload`, formData, {
-        withCredentials: false,
-        timeout: 300000, // 5 minute timeout
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          setUploadProgress((prev) => ({
-            ...prev,
-            total: percentCompleted,
-          }));
-        },
-      })
-      .then((response) => {
-        setLoading(false);
-        if (source) {
-          source.close();
-        }
-        
-        // Handle partial success (status 207)
-        if (response.status === 207) {
-          const { successful, failed, failedFiles } = response.data;
-          const message = `Upload partially completed:\n${successful} files uploaded successfully\n${failed} files failed\n\nFailed files:\n${failedFiles.map(f => `- ${f.filename}: ${f.error}`).join('\n')}`;
-          alert(message);
-          showToast(`${successful} files uploaded successfully, ${failed} failed`, 'warning');
-        } else {
-          showToast('Photos uploaded successfully!', 'success');
-        }
-        
-        navigate("/");
-      })
-      .catch((error) => {
-        setLoading(false);
-        if (source) {
-          source.close();
-        }
-
-        let errorMessage = "Upload failed: ";
-        
-        if (error.code === 'ECONNABORTED') {
-          errorMessage += "Request timed out. Please try uploading fewer images at once or reduce image sizes.";
-        } else if (error.response) {
-          const { data } = error.response;
-          if (data.failedFiles) {
-            errorMessage += `\n\nFailed files:\n${data.failedFiles.map(f => `- ${f.filename}: ${f.error}`).join('\n')}`;
-          } else {
-            errorMessage += data.details || data.error || error.message;
-          }
-        } else if (error.request) {
-          errorMessage += "No response received from server. Please check your internet connection.";
-        } else {
-          errorMessage += error.message;
-        }
-
-        alert(errorMessage);
+      if (failedUploads === 0) {
+        showToast('All photos uploaded successfully!', 'success');
+      } else if (successfulUploads > 0) {
+        const message = `${successfulUploads} files uploaded successfully, ${failedUploads} failed`;
+        showToast(message, 'warning');
+        alert(`Upload partially completed:\n${message}\n\nFailed files:\n${failedFiles.map(f => `- ${f.filename}: ${f.error}`).join('\n')}`);
+      } else {
         showToast('Upload failed', 'error');
-      });
+        alert(`Upload failed:\n${failedFiles.map(f => `- ${f.filename}: ${f.error}`).join('\n')}`);
+      }
+
+      if (successfulUploads > 0) {
+        navigate("/");
+      }
+    } catch (error) {
+      let errorMessage = "Upload failed: ";
+      
+      if (error.code === 'ECONNABORTED') {
+        errorMessage += "Request timed out. Please try uploading fewer images at once or reduce image sizes.";
+      } else if (error.response) {
+        const { data } = error.response;
+        errorMessage += data.details || data.error || error.message;
+      } else if (error.request) {
+        errorMessage += "Server is not responding. Please try again in a few moments.";
+      } else {
+        errorMessage += error.message;
+      }
+
+      showToast('Upload failed', 'error');
+      alert(errorMessage);
+    } finally {
+      setLoading(false);
+      if (source) {
+        source.close();
+      }
+    }
   };
 
   const handleCancel = () => {
