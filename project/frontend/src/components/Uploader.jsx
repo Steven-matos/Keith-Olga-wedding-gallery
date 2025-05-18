@@ -43,16 +43,35 @@ const PhotoUploader = () => {
     };
   }, [navigate, eventSource]);
 
-  const handleFileChange = (event) => {
-    setSelectedFiles([...selectedFiles, ...event.target.files]);
-    let newPreviewImages = [];
-    Array.from(event.target.files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        newPreviewImages.push({ preview: reader.result, file });
-      };
-      reader.readAsDataURL(file);
-    });
+  const handleFileChange = async (event) => {
+    const files = Array.from(event.target.files);
+    
+    // Show loading state
+    setLoading(true);
+    
+    try {
+      // Compress files in parallel
+      const compressedFiles = await Promise.all(
+        files.map(file => compressImage(file))
+      );
+      
+      setSelectedFiles(prev => [...prev, ...compressedFiles]);
+      
+      // Create previews
+      const newPreviewImages = [];
+      compressedFiles.forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          newPreviewImages.push({ preview: reader.result, file });
+        };
+        reader.readAsDataURL(file);
+      });
+    } catch (error) {
+      console.error('Error processing files:', error);
+      alert('Error processing images. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Toast component
@@ -76,11 +95,14 @@ const PhotoUploader = () => {
 
   // Function to compress image
   const compressImage = async (file) => {
+    // Mobile-specific compression options
     const options = {
-      maxSizeMB: 5,
-      maxWidthOrHeight: 1920,
+      maxSizeMB: 2, // Smaller size for mobile
+      maxWidthOrHeight: 1600, // Slightly smaller for mobile
       useWebWorker: true,
-      initialQuality: 0.8,
+      initialQuality: 0.7, // Slightly lower quality for faster uploads
+      alwaysKeepResolution: true, // Keep aspect ratio
+      fileType: file.type, // Keep original file type
     };
 
     try {
@@ -91,12 +113,12 @@ const PhotoUploader = () => {
       });
     } catch (error) {
       console.error('Error compressing image:', error);
-      return file; // Return original file if compression fails
+      return file;
     }
   };
 
   // Function to upload files in chunks
-  const uploadFilesInChunks = async (files, chunkSize = 2) => {
+  const uploadFilesInChunks = async (files, chunkSize = 1) => { // Reduced chunk size for mobile
     const chunks = [];
     for (let i = 0; i < files.length; i += chunkSize) {
       chunks.push(files.slice(i, i + chunkSize));
@@ -108,13 +130,7 @@ const PhotoUploader = () => {
 
     for (const chunk of chunks) {
       const formData = new FormData();
-      
-      // Compress each file in the chunk
-      const compressedFiles = await Promise.all(
-        chunk.map(file => compressImage(file))
-      );
-
-      compressedFiles.forEach((file) => {
+      chunk.forEach((file) => {
         formData.append("images", file);
       });
       formData.append("uploaderName", "generic");
@@ -122,7 +138,7 @@ const PhotoUploader = () => {
       try {
         const response = await axios.post(`${getApiUrl()}/upload`, formData, {
           withCredentials: false,
-          timeout: 300000, // 5 minute timeout
+          timeout: 60000, // 1 minute timeout for mobile
           headers: {
             'Content-Type': 'multipart/form-data',
           },
@@ -310,12 +326,13 @@ const PhotoUploader = () => {
                     onChange={handleFileChange}
                     className="w-full cursor-pointer"
                     accept="image/*"
+                    capture="environment" // Use camera on mobile
                   />
                 </div>
               </label>
             </div>
             <p className="text-xs/5 text-gray-600 mt-2">
-              PNG, JPG, GIF up to 10MB
+              Select photos or take new ones
             </p>
           </div>
         </div>
@@ -330,7 +347,12 @@ const PhotoUploader = () => {
           <button
             type="submit"
             onClick={handleSubmit}
-            className="flex-1 max-w-xs inline-flex items-center justify-center rounded-md bg-indigo-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 touch-manipulation"
+            disabled={selectedFiles.length === 0}
+            className={`flex-1 max-w-xs inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 touch-manipulation ${
+              selectedFiles.length === 0
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-indigo-500 hover:bg-indigo-700'
+            }`}
           >
             Upload
           </button>

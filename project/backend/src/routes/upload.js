@@ -20,10 +20,10 @@ const s3Client = new S3Client({
 });
 
 // Image processing configuration
-const MAX_WIDTH = 1920; // Maximum width for resized images
-const MAX_HEIGHT = 1080; // Maximum height for resized images
-const QUALITY = 85; // JPEG quality (0-100)
-const MOBILE_QUALITY = 80; // Slightly lower quality for mobile to reduce data usage
+const MAX_WIDTH = 1600; // Reduced for mobile
+const MAX_HEIGHT = 1600; // Reduced for mobile
+const QUALITY = 80; // JPEG quality (0-100)
+const MOBILE_QUALITY = 75; // Slightly lower quality for mobile to reduce data usage
 
 // Supported image formats
 const SUPPORTED_FORMATS = [
@@ -112,9 +112,9 @@ async function processImage(buffer, originalMimeType) {
         processedBuffer = await image
           .webp({
             quality: MOBILE_QUALITY,
-            effort: 4,
+            effort: 3, // Reduced effort for faster processing
             lossless: false,
-            nearLossless: true,
+            nearLossless: false, // Disabled for faster processing
           })
           .toBuffer();
         break;
@@ -122,7 +122,7 @@ async function processImage(buffer, originalMimeType) {
       case "png":
         processedBuffer = await image
           .png({
-            compressionLevel: 6,
+            compressionLevel: 4, // Reduced compression level for faster processing
             palette: true,
             quality: MOBILE_QUALITY,
           })
@@ -137,8 +137,8 @@ async function processImage(buffer, originalMimeType) {
             mozjpeg: true,
             chromaSubsampling: "4:2:0",
             optimizeScans: true,
-            trellisQuantisation: true,
-            overshootDeringing: true,
+            trellisQuantisation: false, // Disabled for faster processing
+            overshootDeringing: false, // Disabled for faster processing
             optimizeCoding: true,
           })
           .toBuffer();
@@ -160,8 +160,8 @@ async function processImage(buffer, originalMimeType) {
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 20 * 1024 * 1024, // 20 MB limit
-    files: 10,
+    fileSize: 10 * 1024 * 1024, // 10 MB limit for mobile
+    files: 5, // Reduced number of files for mobile
   },
   fileFilter: (req, file, cb) => {
     // Accept only supported image files
