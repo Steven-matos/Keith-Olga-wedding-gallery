@@ -176,63 +176,125 @@ const upload = multer({
 // Route: Upload Files to S3
 router.post("/", upload.array("images", 10), async (req, res) => {
   if (!req.files || req.files.length === 0) {
-    return res.status(400).json({ error: "No photos uploaded." });
+    return res.status(400).json({ 
+      error: "No photos uploaded.",
+      details: "Please select at least one photo to upload."
+    });
   }
 
   try {
     const uploadedPhotos = [];
     const totalFiles = req.files.length;
     let completedFiles = 0;
+    let failedFiles = [];
 
-    for (const file of req.files) {
-      // Process and optimize the image
-      const processed = await processImage(file.buffer, file.mimetype);
+    // Process files in parallel with a concurrency limit
+    const processFile = async (file) => {
+      try {
+        // Validate file size
+        if (file.size > 10 * 1024 * 1024) {
+          throw new Error(`File ${file.originalname} exceeds the 10MB size limit`);
+        }
 
-      const params = {
-        Bucket: process.env.AWS_S3_BUCKET_NAME,
-        Key: `${Date.now()}-${file.originalname}.${processed.format}`,
-        Body: processed.buffer,
-        ContentType: processed.contentType,
-        ACL: "public-read",
-      };
+        // Process and optimize the image
+        const processed = await processImage(file.buffer, file.mimetype);
 
-      // Upload to S3 with progress tracking
-      const command = new PutObjectCommand(params);
-      const uploadResult = await s3Client.send(command);
+        const params = {
+          Bucket: process.env.AWS_S3_BUCKET_NAME,
+          Key: `${Date.now()}-${file.originalname}.${processed.format}`,
+          Body: processed.buffer,
+          ContentType: processed.contentType,
+          ACL: "public-read",
+        };
 
-      // Save photo metadata in the database
-      const photo = new Photo({
-        uploaderName: req.body.uploaderName,
-        caption: req.body.caption,
-        photoURL: `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${params.Key}`,
-        originalSize: file.size,
-        processedSize: processed.buffer.length,
-        format: processed.format,
-        originalFormat: file.mimetype.split("/")[1],
-        deviceInfo: processed.exifData?.device
-          ? {
-              make: processed.exifData.device,
-              model: processed.exifData.model,
-            }
-          : null,
-        location: processed.exifData?.location,
-        uploadDate: new Date(processed.exifData?.date || Date.now()),
-      });
-      uploadedPhotos.push(photo);
-      completedFiles++;
+        // Upload to S3
+        const command = new PutObjectCommand(params);
+        await s3Client.send(command);
+
+        // Create photo document
+        const photo = new Photo({
+          uploaderName: req.body.uploaderName,
+          caption: req.body.caption,
+          photoURL: `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${params.Key}`,
+          originalSize: file.size,
+          processedSize: processed.buffer.length,
+          format: processed.format,
+          originalFormat: file.mimetype.split("/")[1],
+          deviceInfo: processed.exifData?.device
+            ? {
+                make: processed.exifData.device,
+                model: processed.exifData.model,
+              }
+            : null,
+          location: processed.exifData?.location,
+          uploadDate: new Date(processed.exifData?.date || Date.now()),
+        });
+
+        completedFiles++;
+        uploadProgressEmitter.emit("progress", {
+          fileId: file.originalname,
+          progress: Math.round((completedFiles / totalFiles) * 100),
+        });
+
+        return photo;
+      } catch (error) {
+        console.error(`Error processing file ${file.originalname}:`, error);
+        failedFiles.push({
+          filename: file.originalname,
+          error: error.message
+        });
+        throw error;
+      }
+    };
+
+    // Process files in parallel with a concurrency limit of 3
+    const concurrencyLimit = 3;
+    const chunks = [];
+    for (let i = 0; i < req.files.length; i += concurrencyLimit) {
+      chunks.push(req.files.slice(i, i + concurrencyLimit));
     }
 
-    await Photo.insertMany(uploadedPhotos);
+    for (const chunk of chunks) {
+      try {
+        const results = await Promise.all(chunk.map(processFile));
+        uploadedPhotos.push(...results);
+      } catch (error) {
+        // Continue processing other chunks even if one fails
+        console.error("Error processing chunk:", error);
+      }
+    }
 
-    res.status(200).json({
-      message: "Photos uploaded and optimized successfully",
-      photos: uploadedPhotos,
-    });
+    if (uploadedPhotos.length > 0) {
+      await Photo.insertMany(uploadedPhotos);
+      
+      if (failedFiles.length > 0) {
+        res.status(207).json({
+          message: "Some files were uploaded successfully, but some failed",
+          successful: uploadedPhotos.length,
+          failed: failedFiles.length,
+          failedFiles: failedFiles,
+          photos: uploadedPhotos,
+        });
+      } else {
+        res.status(200).json({
+          message: "All photos uploaded and optimized successfully",
+          photos: uploadedPhotos,
+        });
+      }
+    } else {
+      res.status(500).json({
+        error: "Failed to upload any photos",
+        details: "All upload attempts failed",
+        failedFiles: failedFiles
+      });
+    }
   } catch (error) {
     console.error("Error uploading to S3:", error);
     res.status(500).json({
       error: "Error uploading photos",
       details: error.message,
+      type: error.name,
+      code: error.code
     });
   }
 });

@@ -18,6 +18,7 @@ const PhotoUploader = () => {
   const [uploadProgress, setUploadProgress] = useState({});
   const [eventSource, setEventSource] = useState(null);
   const [serverStatus, setServerStatus] = useState("checking...");
+  const [toast, setToast] = useState({ show: false, message: "", type: "" });
 
   useEffect(() => {
     // Check backend connection
@@ -51,6 +52,25 @@ const PhotoUploader = () => {
       };
       reader.readAsDataURL(file);
     });
+  };
+
+  // Toast component
+  const Toast = ({ message, type }) => (
+    <div className="fixed bottom-4 right-4 z-50 animate-fade-in-up">
+      <div className={`rounded-lg px-6 py-3 shadow-lg ${
+        type === 'success' ? 'bg-green-500' : 'bg-red-500'
+      } text-white`}>
+        {message}
+      </div>
+    </div>
+  );
+
+  // Function to show toast
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast({ show: false, message: "", type: "" });
+    }, 3000);
   };
 
   const handleSubmit = (event) => {
@@ -90,12 +110,34 @@ const PhotoUploader = () => {
     axios
       .post(`${getApiUrl()}/upload`, formData, {
         withCredentials: false,
+        timeout: 300000, // 5 minute timeout
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress((prev) => ({
+            ...prev,
+            total: percentCompleted,
+          }));
+        },
       })
-      .then(() => {
+      .then((response) => {
         setLoading(false);
         if (source) {
           source.close();
         }
+        
+        // Handle partial success (status 207)
+        if (response.status === 207) {
+          const { successful, failed, failedFiles } = response.data;
+          const message = `Upload partially completed:\n${successful} files uploaded successfully\n${failed} files failed\n\nFailed files:\n${failedFiles.map(f => `- ${f.filename}: ${f.error}`).join('\n')}`;
+          alert(message);
+          showToast(`${successful} files uploaded successfully, ${failed} failed`, 'warning');
+        } else {
+          showToast('Photos uploaded successfully!', 'success');
+        }
+        
         navigate("/");
       })
       .catch((error) => {
@@ -103,7 +145,26 @@ const PhotoUploader = () => {
         if (source) {
           source.close();
         }
-        alert(error.message);
+
+        let errorMessage = "Upload failed: ";
+        
+        if (error.code === 'ECONNABORTED') {
+          errorMessage += "Request timed out. Please try uploading fewer images at once or reduce image sizes.";
+        } else if (error.response) {
+          const { data } = error.response;
+          if (data.failedFiles) {
+            errorMessage += `\n\nFailed files:\n${data.failedFiles.map(f => `- ${f.filename}: ${f.error}`).join('\n')}`;
+          } else {
+            errorMessage += data.details || data.error || error.message;
+          }
+        } else if (error.request) {
+          errorMessage += "No response received from server. Please check your internet connection.";
+        } else {
+          errorMessage += error.message;
+        }
+
+        alert(errorMessage);
+        showToast('Upload failed', 'error');
       });
   };
 
@@ -114,6 +175,39 @@ const PhotoUploader = () => {
     }
     navigate("/");
   };
+
+  // Loading spinner component
+  const LoadingSpinner = () => (
+    <div className="fixed top-0 left-0 w-full h-full bg-gray-900/75 text-center p-4 z-50">
+      <div className="bg-white rounded-lg p-6 max-w-md mx-auto mt-20">
+        <div className="flex justify-center mb-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        </div>
+        <h2 className="text-xl font-semibold mb-4">Uploading Files</h2>
+        {selectedFiles.map((file) => (
+          <div key={file.name} className="mb-4">
+            <div className="flex justify-between mb-1">
+              <span className="text-sm font-medium text-gray-700 truncate max-w-[200px]">
+                {file.name}
+              </span>
+              <span className="text-sm font-medium text-gray-700">
+                {uploadProgress[file.name] || 0}%
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div
+                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress[file.name] || 0}%` }}
+              ></div>
+            </div>
+          </div>
+        ))}
+        <div className="mt-4 text-sm text-gray-600">
+          Total Progress: {uploadProgress.total || 0}%
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div>
@@ -127,31 +221,8 @@ const PhotoUploader = () => {
           {serverStatus}
         </span>
       </div>
-      {loading ? (
-        <div className="fixed top-0 left-0 w-full h-full bg-gray-900/75 text-center p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md mx-auto mt-20">
-            <h2 className="text-xl font-semibold mb-4">Uploading Files</h2>
-            {selectedFiles.map((file) => (
-              <div key={file.name} className="mb-4">
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-700 truncate max-w-[200px]">
-                    {file.name}
-                  </span>
-                  <span className="text-sm font-medium text-gray-700">
-                    {uploadProgress[file.name] || 0}%
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div
-                    className="bg-blue-600 h-2.5 rounded-full"
-                    style={{ width: `${uploadProgress[file.name] || 0}%` }}
-                  ></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
+      {loading && <LoadingSpinner />}
+      {toast.show && <Toast message={toast.message} type={toast.type} />}
       <header className="header">
         <h1 className="title style-script-regular">Keith & Olga</h1>
       </header>
